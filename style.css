@@ -4,12 +4,6 @@
     --secondary-color: #50e3c2;
     --text-color: #333;
 }
-p{
-    color: white;;
-}
-.bold{
-    font-weight: bold;
-}
 
 body{
     margin: 0;
@@ -18,7 +12,31 @@ body{
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: #2f184f;
 }
+
+h3{
+    font-family: "Inter", sans-serif;
+  font-weight: 800;
+  font-style: normal;
+  color: white;
+  font-size: 33pt;
+  padding: 0;
+  margin-bottom: -16px;
+}
+
+p{
+    font-family: "Inter", sans-serif;
+    font-weight: 200;
+    font-style: normal;
+    color: white;;
+    font-size: 22pt;
+}
+.bold{
+    font-weight: bold;
+}
+
+
 .container{
     width: 1064px;
     height: 798px;
@@ -27,7 +45,7 @@ body{
 .side{
     width: 241px;
     height: 100%;
-    box-shadow: 0px 10px;
+    box-shadow: 2px 0px white;
 }
 
 .side-item{
@@ -41,9 +59,10 @@ body{
 }
 
 .information{
-    left:900px;
+    left: 973px;
     position: absolute;
     top: 10px;
+    z-index: 1;
 }
 
 .beat-container{
