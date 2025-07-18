@@ -58,6 +58,23 @@ p{
     justify-content: center;
 }
 
+.side-item.active {
+    background-color: #ffcc00; /* Beispiel-Farbe: Gelb für aktiv */
+    border-radius: 0.5rem;
+    transition: background-color 0.3s ease;
+}
+
+.side-item svg,
+.side-item p {
+    transition: filter 0.3s ease;
+}
+
+.side-item.active svg,
+.side-item.active p {
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+}
+
+
 .information{
     left: 973px;
     position: absolute;
