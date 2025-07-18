@@ -1,4 +1,20 @@
-"effect"
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+// Reverb simulieren
+function createImpulseResponse(duration = 2, decay = 2, reverse = false) {
+  const sampleRate = audioCtx.sampleRate;
+  const length = sampleRate * duration;
+  const impulse = audioCtx.createBuffer(2, length, sampleRate);
+  for (let i = 0; i < 2; i++) {
+    const channelData = impulse.getChannelData(i);
+    for (let j = 0; j < length; j++) {
+      const n = reverse ? length - j : j;
+      channelData[j] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+    }
+  }
+  return impulse;
+}
+
 
 
 document.getElementById("openPopup").addEventListener("click", function () {
@@ -8,6 +24,8 @@ document.getElementById("openPopup").addEventListener("click", function () {
 document.getElementById("closePopup").addEventListener("click", function () {
     document.getElementById("popup").classList.add("hidden");
 });
+
+
 
 
 const sideItems = document.querySelectorAll(".side-item");
@@ -53,6 +71,17 @@ const activeBeatsByInstrument = {
 };
 let effectIndex = 0;
 
+const reverbLevels = {
+  "tom": 0,
+  "kick": 0,
+  "snare": 0,
+  "clap": 0,
+  "hat": 0
+};
+
+const reverbLevelSizes = [0, 30, 60, 120];
+
+
 // Ebenen-Stack (z. B. ["side", "effect"])
 let levelStack = ["side"];
 
@@ -71,9 +100,34 @@ const instrumentMap = {
 
 const effects = ["Reverb", "Delay", "Distortion", "Pitch"];
 
+const reverbSettings = [
+  { delay: 0.0, feedback: 0.0 },  // Stufe 0: Kein Reverb
+  { delay: 0.05, feedback: 0.2 }, // Stufe 1
+  { delay: 0.1, feedback: 0.4 },  // Stufe 2
+  { delay: 0.15, feedback: 0.6 }  // Stufe 3: Stark
+];
+
 function getCurrentLevel() {
   return levelStack[levelStack.length - 1];
 }
+function updateReverbVisual(instrument) {
+     console.log("Update visual for", instrument);
+  const visual = document.getElementById("reverb-visual");
+  const inner = document.getElementById("reverb-level");
+
+  if (!instrument || !(instrument in reverbLevels)) {
+    visual.style.display = "none";
+    return;
+  }
+
+  const level = reverbLevels[instrument];
+  const size = reverbLevelSizes[level];
+
+  visual.style.display = "flex";
+  inner.style.width = `${size}px`;
+  inner.style.height = `${size}px`;
+}
+
 
 function updateActiveItem(index) {
   sideItems.forEach((item, i) => {
@@ -147,9 +201,44 @@ function startSequence() {
       if (beatsForInstrument.has(beatNumber)) {
         const sound = soundMap[key];
         if (sound) {
-          const clone = sound.cloneNode();
-          clone.volume = volumeMap[key] ?? 1;
-          clone.play();
+          const source = audioCtx.createBufferSource();
+
+    fetch(sound.src)
+    .then(res => res.arrayBuffer())
+    .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+    .then(audioBuffer => {
+        source.buffer = audioBuffer;
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = volumeMap[key] ?? 1;
+
+        const reverbAmount = reverbLevels[key];
+        if (reverbAmount > 0) {
+        const convolver = audioCtx.createConvolver();
+        convolver.buffer = createImpulseResponse(2, 2); // konstant halten
+
+        const wetGain = audioCtx.createGain();
+        const dryGain = audioCtx.createGain();
+
+        const wet = reverbAmount / 3;
+        wetGain.gain.value = wet;
+        dryGain.gain.value = 1 - wet;
+
+        source.connect(convolver);
+        source.connect(dryGain);
+
+        convolver.connect(wetGain);
+        wetGain.connect(gainNode);
+        dryGain.connect(gainNode);
+        } else {
+        source.connect(gainNode);
+        }
+
+
+        gainNode.connect(audioCtx.destination);
+        source.start();
+  });
+
         }
       }
     }
@@ -196,75 +285,94 @@ function closeSubPanel() {
 }
 
 document.addEventListener("keydown", (e) => {
-  const currentLevel = getCurrentLevel();
-
-  if (e.key === "ArrowRight") {
-    if (currentLevel === "side") {
-      activeIndex = (activeIndex + 1) % sideItems.length;
-      updateActiveItem(activeIndex);
-    } else if (currentLevel === "effect") {
-      effectIndex = (effectIndex + 1) % effects.length;
-      openSubPanel(sideItems[activeIndex]);
-    }
-  } else if (e.key === "ArrowLeft") {
-    if (currentLevel === "side") {
-      activeIndex = (activeIndex - 1 + sideItems.length) % sideItems.length;
-      updateActiveItem(activeIndex);
-    } else if (currentLevel === "effect") {
-      effectIndex = (effectIndex - 1 + effects.length) % effects.length;
-      openSubPanel(sideItems[activeIndex]);
-    }
-  } else if (e.key === "Enter") {
-    if (currentLevel === "side") {
-      levelStack.push("effect");
-      openSubPanel(sideItems[activeIndex]);
-    }
-  } else if (e.key === "Backspace") {
-    if (levelStack.length > 1) {
-      e.preventDefault();
-      const exited = levelStack.pop();
-      if (exited === "effect") closeSubPanel();
-    }
-  } else if (e.key === "Escape") {
-    while (levelStack.length > 1) {
-      const exited = levelStack.pop();
-      if (exited === "effect") closeSubPanel();
-    }
-  } else if (e.key === " ") {
-    e.preventDefault();
-    isPlaying ? stopSequence() : startSequence();
-  } else if (/^[1-8]$/.test(e.key)) {
+  const level = getCurrentLevel();
   const label = sideLabels[activeIndex];
-  const key = instrumentMap[label]; // z. B. "tom"
+  const key = instrumentMap[label];
 
-  // ❗ Nur wenn du im Untermenü bist ("effect") darfst du Beats setzen:
-  if (getCurrentLevel() === "effect" && key && activeBeatsByInstrument[key]) {
+  switch (e.key) {
+    case "ArrowRight":
+      if (level === "side") {
+        activeIndex = (activeIndex + 1) % sideItems.length;
+        updateActiveItem(activeIndex);
+      } else if (level === "effect") {
+        effectIndex = (effectIndex + 1) % effects.length;
+        openSubPanel(sideItems[activeIndex]);
+      } else if (level === "reverb" && key) {
+        reverbLevels[key] = Math.min(3, reverbLevels[key] + 1);
+        updateReverbVisual(key);
+      }
+      break;
 
-        const num = parseInt(e.key);
-        const beatSet = activeBeatsByInstrument[key];
-        
-        if (beatSet.has(num)) {
-        beatSet.delete(num);
-        } else {
-        beatSet.add(num);
+    case "ArrowLeft":
+      if (level === "side") {
+        activeIndex = (activeIndex - 1 + sideItems.length) % sideItems.length;
+        updateActiveItem(activeIndex);
+      } else if (level === "effect") {
+        effectIndex = (effectIndex - 1 + effects.length) % effects.length;
+        openSubPanel(sideItems[activeIndex]);
+      } else if (level === "reverb" && key) {
+        reverbLevels[key] = Math.max(0, reverbLevels[key] - 1);
+        updateReverbVisual(key);
+      }
+      break;
+
+    case "Enter":
+      if (level === "side") {
+        levelStack.push("effect");
+        openSubPanel(sideItems[activeIndex]);
+      } else if (level === "effect") {
+        const focusedEffect = effects[effectIndex % effects.length];
+        if (focusedEffect === "Reverb" && key) {
+          levelStack.push("reverb");
+          updateReverbVisual(key);
         }
+      }
+      break;
 
-        updateBeats(); // Darstellungs-Update
+    case "Backspace":
+      if (levelStack.length > 1) {
+        e.preventDefault();
+        const exited = levelStack.pop();
+        if (exited === "reverb") {
+          document.getElementById("reverb-visual").style.display = "none";
+        }
+        if (exited === "effect") closeSubPanel();
+      }
+      break;
+
+    case "Escape":
+      while (levelStack.length > 1) {
+        const exited = levelStack.pop();
+        if (exited === "effect") closeSubPanel();
+      }
+      break;
+
+    case " ":
+      e.preventDefault();
+      isPlaying ? stopSequence() : startSequence();
+      break;
+
+    default:
+  if (/^[1-8]$/.test(e.key)) {
+    const beatIndex = parseInt(e.key, 10) - 1;
+    const label = sideLabels[activeIndex];
+    const key = instrumentMap[label];
+
+    if (!key) return;
+
+    const beatNumber = beatIndex + 1;
+
+    // Beat umschalten
+    if (activeBeatsByInstrument[key].has(beatNumber)) {
+      activeBeatsByInstrument[key].delete(beatNumber);
+    } else {
+      activeBeatsByInstrument[key].add(beatNumber);
+    }
+
+    updateBeats();
   }
-  } else if (e.key.toLowerCase() === "a") {
-    const label = sideLabels[activeIndex];
-    const key = instrumentMap[label];
-    if (key && volumeMap[key] !== undefined) {
-      volumeMap[key] = Math.max(0, volumeMap[key] - 0.1);
-      console.log(`${key} volume: ${volumeMap[key].toFixed(2)}`);
-    }
-  } else if (e.key.toLowerCase() === "d") {
-    const label = sideLabels[activeIndex];
-    const key = instrumentMap[label];
-    if (key && volumeMap[key] !== undefined) {
-      volumeMap[key] = Math.min(1, volumeMap[key] + 0.1);
-      console.log(`${key} volume: ${volumeMap[key].toFixed(2)}`);
-    }
+  break;
+
   }
 });
 
@@ -272,4 +380,3 @@ document.addEventListener("keydown", (e) => {
 
 updateActiveItem(activeIndex);
 startSequence();
-

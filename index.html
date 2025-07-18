@@ -62,6 +62,7 @@
         <div class="gif-box">
             <img src="gifs/tom.gif" alt="">
         </div>
+        
         <div class="beat-container">
             <div class="beats"></div>
             <div class="beats"></div>
@@ -128,6 +129,33 @@
             <button id="closePopup">Schließen</button>
         </div>
     </div>
+    
+         <div id="reverb-visual" style="
+            display: none;
+            justify-content: center;
+            align-items: center;
+            width: 200px;
+            height: 200px;
+            border: 3px solid white;
+            border-radius: 50%;
+            position: absolute;
+            top: 150px;
+            left: 749px;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background-color: rgb(30, 7, 59, 1);
+            ">
+            <div id="reverb-level" style="
+                background-color: white;
+                border-radius: 50%;
+                width: 0px;
+                height: 0px;
+                transition: width 0.2s, height 0.2s;
+                z-index: 1001;
+            "></div>
+        </div>
+    
+
     <script src="script.js"></script>
 </body>
 </html>
