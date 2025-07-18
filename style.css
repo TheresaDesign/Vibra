@@ -1,7 +1,7 @@
 :root {
     --background-color: #1d0739;
     --primary-color: #1D0739;
-    --secondary-color: #50e3c2;
+    --secondary-color: #FF3172;
     --text-color: #333;
 }
 
@@ -29,7 +29,7 @@ p{
     font-family: "Inter", sans-serif;
     font-weight: 200;
     font-style: normal;
-    color: white;;
+    color: white;
     font-size: 22pt;
 }
 .bold{
@@ -59,7 +59,7 @@ p{
 }
 
 .side-item.active {
-    background-color: #ffcc00; /* Beispiel-Farbe: Gelb für aktiv */
+    background: linear-gradient(90deg, var(--background-color) 0%, var(--secondary-color) 100%);
     border-radius: 0.5rem;
     transition: background-color 0.3s ease;
 }
@@ -83,14 +83,12 @@ p{
 }
 
 .beat-container{
-    position: relative;
-  bottom: 138px;
+  position: relative;
+  bottom: 60px;
   left: 296px;
   width: 742px;
-  height: 170px;
   display: flex;
   flex-direction: row;
-  align-items: center;
   gap: 35px;
 }
 
@@ -105,36 +103,34 @@ justify-content: center;
 }
 
 .beats.active {
-  transform: scale(1.5);
-  background-color: #f0f;
+  height: 60px;
   z-index: 2;
 }
 
 .beats.marked::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: 3px solid #00f; /* oder eine andere Farbe */
+  top: -10px;
+  width: 60px;
+  height: 7px;
   box-sizing: border-box;
   pointer-events: none;
   z-index: 1;
-  border-radius: 4px; /* optional für runde Ecken */
+  border-radius: 4px;
+  background-color: #FF3172;
+
 }
 
 .gif-box{
-    position: absolute;
-    width:600px;
-    height: 600px;
-    top: 73px;
-  left: 547px;
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  top: 176px;
+  left: 638px;
 }
 
 .gif-box img{
     width: 100%;
-    object-fit: cover;
 }
 
 /* Popup Grundstruktur */
@@ -156,13 +152,13 @@ justify-content: center;
 }
 
 .popup-content {
-    background: #fff;
-    color: black;
+    background: var(--background-color);
+    color: white;
     padding: 2rem;
     border-radius: 1rem;
     max-width: 600px;
     width: 90%;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    box-shadow: 0 0 20px white;
     text-align: center;
     font-family: 'Inter', sans-serif;
 }
@@ -186,19 +182,21 @@ justify-content: center;
 .control .circle {
     width: 50px;
     height: 50px;
-    background-color: #ccc;
+    background-color: #b1abdd;
     border-radius: 50%;
 }
 
 .key-label {
-    font-size: 0.8rem;
-    color: #333;
-    margin-top: 0.3rem;
+    font-family: "Inter", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+    color: white;
+    font-size: 15pt;
 }
 
 /* Encoder die klickbar sind */
 .control.encoder.clickable .circle {
-    border: 2px solid #333;
+    border: 2px solid #b1abdd;
 }
 
 /* Quadrat-Buttons */
@@ -207,17 +205,18 @@ justify-content: center;
     grid-template-columns: repeat(4, 1fr);
     gap: 0.5rem;
     margin-bottom: 1.5rem;
+    justify-items: center;
 }
 
 .square {
     width: 50px;
     height: 50px;
-    background-color: #eee;
+    background-color: #b1abdd;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    border: 1px solid #ccc;
+    border: 1px solid #b1abdd;
     border-radius: 0.3rem;
     cursor: default;
 }
@@ -228,22 +227,52 @@ justify-content: center;
     bottom: 1rem;
     right: 1rem;
     padding: 0.5rem 1rem;
-    background: white;
-    color: black;
-    font-weight: bold;
-    border: 2px solid black;
+    background: var(--secondary-color);
+     font-family: "Inter", sans-serif;
+  font-weight: 800;
+  font-style: normal;
+  color: white;
+  font-size: 20pt;
+  border: none;
     border-radius: 0.5rem;
     cursor: pointer;
     z-index: 5;
 }
 
+#closePopup {
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    background: var(--secondary-color);
+     font-family: "Inter", sans-serif;
+  font-weight: 800;
+  font-style: normal;
+  color: white;
+  font-size: 15pt;
+  border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    z-index: 5;
+} 
 .effect-box {
   margin-left: 12px;
   display: flex;
   flex-direction: column;
-  background: #1a1a1a;
-  padding: 0.5em;
-  border-radius: 0.5em;
+  background: var(--background-color);
+  padding: 1.5em;
+  position: absolute;
+  left: 417px;
+  top: 40px;
+  font-family: "Inter", sans-serif;
+    font-weight: 300;
+    font-style: normal;
+    color: white;
+    font-size: 20pt;
+    border-right: white 2px solid;
+    border-top: white 2px solid;
+    border-bottom: white 2px solid;
+    width: 200px;
+    z-index: 2;
 }
 
 .effect-item {
