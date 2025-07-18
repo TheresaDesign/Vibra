@@ -123,10 +123,9 @@ justify-content: center;
 
 .gif-box{
   position: absolute;
-  width: 600px;
-  height: 600px;
-  top: 176px;
-  left: 638px;
+  height: 650px;
+  top: 230px;
+  right: 290px;
 }
 
 .gif-box img{
