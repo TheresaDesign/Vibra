@@ -95,3 +95,103 @@ p{
     width: 100%;
     object-fit: cover;
 }
+
+/* Popup Grundstruktur */
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.hidden {
+    display: none;
+}
+
+.popup-content {
+    background: #fff;
+    color: black;
+    padding: 2rem;
+    border-radius: 1rem;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Bedienelemente oben */
+.controls-row {
+    display: flex;
+    justify-content: space-around;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.control .circle {
+    width: 50px;
+    height: 50px;
+    background-color: #ccc;
+    border-radius: 50%;
+}
+
+.key-label {
+    font-size: 0.8rem;
+    color: #333;
+    margin-top: 0.3rem;
+}
+
+/* Encoder die klickbar sind */
+.control.encoder.clickable .circle {
+    border: 2px solid #333;
+}
+
+/* Quadrat-Buttons */
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.square {
+    width: 50px;
+    height: 50px;
+    background-color: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 1px solid #ccc;
+    border-radius: 0.3rem;
+    cursor: default;
+}
+
+/* Show Interface Button */
+#openPopup {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    color: black;
+    font-weight: bold;
+    border: 2px solid black;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    z-index: 5;
+}

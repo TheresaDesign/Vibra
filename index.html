@@ -74,5 +74,58 @@
         </div>
     </div>
     
+
+    <!-- Button zum Öffnen des Popups -->
+    <button id="openPopup">Show Interface</button>
+
+    <!-- Popup-Fenster -->
+    <div id="popup" class="popup hidden">
+        <div class="popup-content">
+            <p>Nutze die Tasten auf deiner Tastatur, um die Drum Machine zu bedienen:</p>
+
+            <!-- Encoder + Buttons Zeile -->
+            <div class="controls-row">
+                <div class="control encoder">
+                    <div class="circle"></div>
+                    <span class="key-label">A / W</span>
+                </div>
+
+                <div class="control svg-button">
+                    <!-- Beispiel-SVG -->
+                    <svg width="50" height="50" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="40" fill="white" />
+                        <text x="50%" y="55%" text-anchor="middle" fill="black" font-size="18">␣</text>
+                    </svg>
+                    <span class="key-label">Leertaste</span>
+                </div>
+
+                <div class="control round-button">
+                    <div class="circle"></div>
+                    <span class="key-label">←</span>
+                </div>
+
+                <div class="control encoder clickable">
+                    <div class="circle"></div>
+                    <span class="key-label">← → / Enter</span>
+                </div>
+            </div>
+
+            <!-- Quadratische Buttons -->
+            <div class="button-grid">
+                <div class="square">1</div>
+                <div class="square">2</div>
+                <div class="square">3</div>
+                <div class="square">4</div>
+                <div class="square">5</div>
+                <div class="square">6</div>
+                <div class="square">7</div>
+                <div class="square">8</div>
+            </div>
+
+            <!-- Schließen-Button -->
+            <button id="closePopup">Schließen</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
