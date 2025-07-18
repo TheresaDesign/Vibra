@@ -29,11 +29,28 @@ const volumeMap = {
   "hat": 1
 };
 
+const colorMap = {
+  "Tom": "#FAC2FF",
+  "Kick": "#FF3172",
+  "Snare": "#6EEBCB",
+  "Clap": "#FF955C",
+  "Hat": "#5583E7",
+  "Effects": "#9a80bfff",
+  "Beats per minute": "#9a80bfff",
+  "More": "#9a80bfff"
+};
+
 let activeIndex = 0;
 let currentBeatIndex = 0;
 let isPlaying = false;
 let beatInterval;
-const activeBeats = new Set();
+const activeBeatsByInstrument = {
+  "tom": new Set(),
+  "kick": new Set(),
+  "snare": new Set(),
+  "clap": new Set(),
+  "hat": new Set()
+};
 let effectIndex = 0;
 
 // Ebenen-Stack (z. B. ["side", "effect"])
@@ -60,11 +77,22 @@ function getCurrentLevel() {
 
 function updateActiveItem(index) {
   sideItems.forEach((item, i) => {
+    const label = sideLabels[i];
+    const color = colorMap[label] || "#fff";
+
     item.classList.toggle("active", i === index);
+    if (i === index) {
+      item.style.backgroundColor = color;
+    } else {
+      item.style.backgroundColor = "";
+    }
   });
 
   const label = sideLabels[index];
-  if (infoText) infoText.textContent = label;
+  if (infoText) {
+    infoText.textContent = label;
+    infoText.style.color = colorMap[label] || "#fff";
+  }
 
   const imgKey = instrumentMap[label];
   if (gifBox) {
@@ -79,43 +107,58 @@ function updateActiveItem(index) {
 }
 
 function updateBeats() {
+  const label = sideLabels[activeIndex];
+  const currentInstrument = instrumentMap[label];
+
   beats.forEach((beat, i) => {
     beat.classList.remove("active", "marked");
 
-    if (activeBeats.has(i + 1)) {
+    const beatIndex = i + 1;
+
+    // Nur markieren, wenn currentInstrument gültig ist:
+    if (currentInstrument && activeBeatsByInstrument[currentInstrument].has(beatIndex)) {
       beat.classList.add("marked");
     }
 
     if (i === currentBeatIndex) {
       beat.classList.add("active");
 
-      const label = sideLabels[activeIndex];
-      const currentInstrument = instrumentMap[label];
-      if (currentInstrument && gifBox) {
-        if (activeBeats.has(i + 1)) {
-          gifBox.innerHTML = `<img src="gifs/${currentInstrument}.gif" alt="${currentInstrument}">`;
-        } else {
-          gifBox.innerHTML = `<img src="gifs/${currentInstrument}.png" alt="${currentInstrument}">`;
-        }
+      // Wenn Instrument gewählt ist und Beat aktiv ist → Animation + ggf. Ton
+      if (currentInstrument && activeBeatsByInstrument[currentInstrument].has(beatIndex)) {
+        gifBox.innerHTML = `<img src="gifs/${currentInstrument}.gif" alt="${currentInstrument}">`;
+      } else if (currentInstrument) {
+        gifBox.innerHTML = `<img src="gifs/${currentInstrument}.png" alt="${currentInstrument}">`;
       }
-      const sound = soundMap[currentInstrument];
-if (sound && activeBeats.has(i + 1)) {
-  const clone = sound.cloneNode();
-clone.volume = volumeMap[currentInstrument] ?? 1;
-clone.play().catch(err => console.warn("Autoplay prevented:", err));
-}
-
     }
   });
 }
+
 
 function startSequence() {
   beatInterval = setInterval(() => {
     currentBeatIndex = (currentBeatIndex + 1) % beats.length;
     updateBeats();
+
+    const beatNumber = currentBeatIndex + 1;
+
+    // Alle Instrumente durchgehen:
+    for (const key in activeBeatsByInstrument) {
+      const beatsForInstrument = activeBeatsByInstrument[key];
+      if (beatsForInstrument.has(beatNumber)) {
+        const sound = soundMap[key];
+        if (sound) {
+          const clone = sound.cloneNode();
+          clone.volume = volumeMap[key] ?? 1;
+          clone.play();
+        }
+      }
+    }
+
   }, 400);
+
   isPlaying = true;
 }
+
 
 function stopSequence() {
   clearInterval(beatInterval);
@@ -191,11 +234,23 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     isPlaying ? stopSequence() : startSequence();
   } else if (/^[1-8]$/.test(e.key)) {
-    const num = parseInt(e.key);
-    activeBeats.has(num) ? activeBeats.delete(num) : activeBeats.add(num);
-    updateBeats();
-  }  else if (e.key.toLowerCase() === "a") {
-    // Leiser
+    const label = sideLabels[activeIndex];
+    const key = instrumentMap[label]; // z. B. "tom"
+
+    // Nur wenn ein Instrument ausgewählt ist
+    if (getCurrentLevel() === "side" && key && activeBeatsByInstrument[key]) {
+        const num = parseInt(e.key);
+        const beatSet = activeBeatsByInstrument[key];
+        
+        if (beatSet.has(num)) {
+        beatSet.delete(num);
+        } else {
+        beatSet.add(num);
+        }
+
+        updateBeats(); // Darstellungs-Update
+  }
+  } else if (e.key.toLowerCase() === "a") {
     const label = sideLabels[activeIndex];
     const key = instrumentMap[label];
     if (key && volumeMap[key] !== undefined) {
@@ -203,7 +258,6 @@ document.addEventListener("keydown", (e) => {
       console.log(`${key} volume: ${volumeMap[key].toFixed(2)}`);
     }
   } else if (e.key.toLowerCase() === "d") {
-    // Lauter
     const label = sideLabels[activeIndex];
     const key = instrumentMap[label];
     if (key && volumeMap[key] !== undefined) {
@@ -211,9 +265,8 @@ document.addEventListener("keydown", (e) => {
       console.log(`${key} volume: ${volumeMap[key].toFixed(2)}`);
     }
   }
-
-
 });
+
 
 
 updateActiveItem(activeIndex);
