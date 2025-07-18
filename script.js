@@ -14,14 +14,23 @@ const sideItems = document.querySelectorAll(".side-item");
 const beats = document.querySelectorAll(".beats");
 const infoText = document.querySelector(".information p");
 const gifBox = document.querySelector(".gif-box");
+const soundMap = {
+  "tom": new Audio("sounds/tom.mp3"),
+  "kick": new Audio("sounds/kick.mp3"),
+  "snare": new Audio("sounds/snare.mp3"),
+  "clap": new Audio("sounds/clap.mp3"),
+  "hat": new Audio("sounds/hat.mp3")
+};
 
 let activeIndex = 0;
 let currentBeatIndex = 0;
 let isPlaying = false;
 let beatInterval;
 const activeBeats = new Set();
-let currentLevel = "side"; // "side" oder "effect"
 let effectIndex = 0;
+
+// Ebenen-Stack (z. B. ["side", "effect"])
+let levelStack = ["side"];
 
 const sideLabels = [
   "Tom", "Kick", "Snare", "Clap", "Hat",
@@ -37,6 +46,10 @@ const instrumentMap = {
 };
 
 const effects = ["Reverb", "Delay", "Distortion", "Pitch"];
+
+function getCurrentLevel() {
+  return levelStack[levelStack.length - 1];
+}
 
 function updateActiveItem(index) {
   sideItems.forEach((item, i) => {
@@ -78,6 +91,12 @@ function updateBeats() {
           gifBox.innerHTML = `<img src="gifs/${currentInstrument}.png" alt="${currentInstrument}">`;
         }
       }
+      const sound = soundMap[currentInstrument];
+if (sound && activeBeats.has(i + 1)) {
+  const clone = sound.cloneNode();
+  clone.play().catch(err => console.warn("Autoplay prevented:", err));
+}
+
     }
   });
 }
@@ -100,7 +119,7 @@ function openSubPanel(targetItem) {
   if (existing) existing.remove();
 
   const label = sideLabels[activeIndex];
-  if (!instrumentMap[label]) return; // Nur für echte Instrumente
+  if (!instrumentMap[label]) return; // Nur für Instrumente
 
   const box = document.createElement("div");
   box.classList.add("effect-box");
@@ -120,7 +139,14 @@ function openSubPanel(targetItem) {
   targetItem.appendChild(box);
 }
 
+function closeSubPanel() {
+  const box = document.querySelector(".effect-box");
+  if (box) box.remove();
+}
+
 document.addEventListener("keydown", (e) => {
+  const currentLevel = getCurrentLevel();
+
   if (e.key === "ArrowRight") {
     if (currentLevel === "side") {
       activeIndex = (activeIndex + 1) % sideItems.length;
@@ -138,12 +164,21 @@ document.addEventListener("keydown", (e) => {
       openSubPanel(sideItems[activeIndex]);
     }
   } else if (e.key === "Enter") {
-    openSubPanel(sideItems[activeIndex]);
-    currentLevel = "effect";
+    if (currentLevel === "side") {
+      levelStack.push("effect");
+      openSubPanel(sideItems[activeIndex]);
+    }
+  } else if (e.key === "Backspace") {
+    if (levelStack.length > 1) {
+      e.preventDefault();
+      const exited = levelStack.pop();
+      if (exited === "effect") closeSubPanel();
+    }
   } else if (e.key === "Escape") {
-    const effectBox = document.querySelector(".effect-box");
-    if (effectBox) effectBox.remove();
-    currentLevel = "side";
+    while (levelStack.length > 1) {
+      const exited = levelStack.pop();
+      if (exited === "effect") closeSubPanel();
+    }
   } else if (e.key === " ") {
     e.preventDefault();
     isPlaying ? stopSequence() : startSequence();
@@ -154,5 +189,7 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+
 updateActiveItem(activeIndex);
 startSequence();
+
