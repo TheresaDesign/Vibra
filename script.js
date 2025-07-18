@@ -234,11 +234,12 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     isPlaying ? stopSequence() : startSequence();
   } else if (/^[1-8]$/.test(e.key)) {
-    const label = sideLabels[activeIndex];
-    const key = instrumentMap[label]; // z. B. "tom"
+  const label = sideLabels[activeIndex];
+  const key = instrumentMap[label]; // z. B. "tom"
 
-    // Nur wenn ein Instrument ausgewählt ist
-    if (getCurrentLevel() === "side" && key && activeBeatsByInstrument[key]) {
+  // ❗ Nur wenn du im Untermenü bist ("effect") darfst du Beats setzen:
+  if (getCurrentLevel() === "effect" && key && activeBeatsByInstrument[key]) {
+
         const num = parseInt(e.key);
         const beatSet = activeBeatsByInstrument[key];
         
