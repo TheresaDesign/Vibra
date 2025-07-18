@@ -21,6 +21,13 @@ const soundMap = {
   "clap": new Audio("sounds/clap.mp3"),
   "hat": new Audio("sounds/hat.mp3")
 };
+const volumeMap = {
+  "tom": 1,
+  "kick": 1,
+  "snare": 1,
+  "clap": 1,
+  "hat": 1
+};
 
 let activeIndex = 0;
 let currentBeatIndex = 0;
@@ -94,7 +101,8 @@ function updateBeats() {
       const sound = soundMap[currentInstrument];
 if (sound && activeBeats.has(i + 1)) {
   const clone = sound.cloneNode();
-  clone.play().catch(err => console.warn("Autoplay prevented:", err));
+clone.volume = volumeMap[currentInstrument] ?? 1;
+clone.play().catch(err => console.warn("Autoplay prevented:", err));
 }
 
     }
@@ -186,7 +194,25 @@ document.addEventListener("keydown", (e) => {
     const num = parseInt(e.key);
     activeBeats.has(num) ? activeBeats.delete(num) : activeBeats.add(num);
     updateBeats();
+  }  else if (e.key.toLowerCase() === "a") {
+    // Leiser
+    const label = sideLabels[activeIndex];
+    const key = instrumentMap[label];
+    if (key && volumeMap[key] !== undefined) {
+      volumeMap[key] = Math.max(0, volumeMap[key] - 0.1);
+      console.log(`${key} volume: ${volumeMap[key].toFixed(2)}`);
+    }
+  } else if (e.key.toLowerCase() === "d") {
+    // Lauter
+    const label = sideLabels[activeIndex];
+    const key = instrumentMap[label];
+    if (key && volumeMap[key] !== undefined) {
+      volumeMap[key] = Math.min(1, volumeMap[key] + 0.1);
+      console.log(`${key} volume: ${volumeMap[key].toFixed(2)}`);
+    }
   }
+
+
 });
 
 
