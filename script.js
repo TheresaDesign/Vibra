@@ -118,7 +118,6 @@ const equalizerModeIndex = {
 };
 let currentEqualizerIndex = 0;
 
-
 function getCurrentLevel() {
   return levelStack[levelStack.length - 1];
 }
@@ -164,6 +163,74 @@ function openEqualizerBox(instrumentKey) {
   });
 
   document.body.appendChild(box);
+}
+
+let currentDistortionIndex = 0;
+const distortionModes = [0, 1, 2, 3]; // vier Stufen
+const distortionModeIndex = {
+  "tom": 0,
+  "kick": 0,
+  "snare": 0,
+  "clap": 0,
+  "hat": 0
+};
+
+function createDistortionCurve(amount) {
+  const n_samples = 44100;
+  const curve = new Float32Array(n_samples);
+  const deg = Math.PI / 180;
+  for (let i = 0; i < n_samples; ++i) {
+    const x = (i * 2) / n_samples - 1;
+    curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+  }
+  return curve;
+}
+
+function openDistortionBox(key) {
+  let box = document.getElementById("distortion-box");
+  if (box) box.remove();
+
+  const container = document.createElement("div");
+  container.id = "distortion-box";
+  container.className = "distortion-box";
+
+  const index = distortionModeIndex[key] ?? 0;
+
+  for (let i = 0; i < distortionModes.length; i++) {
+    const row = document.createElement("div");
+    row.className = "dist-row";
+    if (i === index) row.classList.add("focused");
+
+    const arrow = document.createElement("div");
+    arrow.className = "arrow";
+    arrow.textContent = i === index ? "→" : "";
+
+    const svg = document.createElement("div");
+    svg.className = "dist-svg";
+    const img = document.createElement("img");
+    img.src = `svg/dist${i + 1}.svg`;
+    svg.appendChild(img);
+
+    row.appendChild(arrow);
+    row.appendChild(svg);
+    container.appendChild(row);
+  }
+
+  document.body.appendChild(container);
+
+  // Effekt anwenden
+  const amount = [0, 100, 300, 600][index];
+  const curve = createDistortionCurve(amount);
+  if (instruments[key]) {
+    if (!instruments[key].distortionNode) {
+      const node = audioCtx.createWaveShaper();
+      node.oversample = "4x";
+      instruments[key].output.disconnect();
+      instruments[key].output.connect(node).connect(audioCtx.destination);
+      instruments[key].distortionNode = node;
+    }
+    instruments[key].distortionNode.curve = curve;
+  }
 }
 
 
@@ -233,81 +300,103 @@ function startSequence() {
 
     const beatNumber = currentBeatIndex + 1;
 
-    // Alle Instrumente durchgehen:
     for (const key in activeBeatsByInstrument) {
       const beatsForInstrument = activeBeatsByInstrument[key];
-      if (beatsForInstrument.has(beatNumber)) {
-        const sound = soundMap[key];
-        if (sound) {
-          const source = audioCtx.createBufferSource();
+      if (!beatsForInstrument.has(beatNumber)) continue;
 
-    fetch(sound.src)
-    .then(res => res.arrayBuffer())
-    .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
-    .then(audioBuffer => {
-        source.buffer = audioBuffer;
+      const sound = soundMap[key];
+      if (!sound) continue;
 
-        const gainNode = audioCtx.createGain();
-        gainNode.gain.value = volumeMap[key] ?? 1;
+      const source = audioCtx.createBufferSource();
 
-        const reverbAmount = reverbLevels[key];
-        if (reverbAmount > 0) {
-        const convolver = audioCtx.createConvolver();
-        convolver.buffer = createImpulseResponse(2, 2); // konstant halten
+      fetch(sound.src)
+        .then(res => res.arrayBuffer())
+        .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+        .then(audioBuffer => {
+          source.buffer = audioBuffer;
 
-        const wetGain = audioCtx.createGain();
-        const dryGain = audioCtx.createGain();
+          const gainNode = audioCtx.createGain();
+          gainNode.gain.value = volumeMap[key] ?? 1;
 
-        const wet = reverbAmount / 3;
-        wetGain.gain.value = wet;
-        dryGain.gain.value = 1 - wet;
+          let nodeChainStart = source;
+          let nodeChainEnd = gainNode;
 
-        source.connect(convolver);
-        source.connect(dryGain);
+          // === REVERB ===
+          const reverbAmount = reverbLevels[key];
+          if (reverbAmount > 0) {
+            const convolver = audioCtx.createConvolver();
+            convolver.buffer = createImpulseResponse(2, 2);
 
-        convolver.connect(wetGain);
-        wetGain.connect(gainNode);
-        dryGain.connect(gainNode);
-        } else {
-        source.connect(gainNode);
-        }
+            const wetGain = audioCtx.createGain();
+            const dryGain = audioCtx.createGain();
+            wetGain.gain.value = reverbAmount / 3;
+            dryGain.gain.value = 1 - wetGain.gain.value;
 
-        // Equalizer einfügen
-        const eqMode = equalizerModes[equalizerModeIndex[key]];
-        if (eqMode !== "flat") {
-        const filter = audioCtx.createBiquadFilter();
-        switch (eqMode) {
-            case "highpass":
-            filter.type = "highpass";
-            filter.frequency.value = 500;
-            break;
-            case "bandpass":
-            filter.type = "bandpass";
-            filter.frequency.value = 1000;
-            break;
-            case "lowpass":
-            filter.type = "lowpass";
-            filter.frequency.value = 1000;
-            break;
-        }
-        gainNode.connect(filter);
-        filter.connect(audioCtx.destination);
-        } else {
-        gainNode.connect(audioCtx.destination);
-        }
+            nodeChainStart.connect(convolver);
+            nodeChainStart.connect(dryGain);
 
-        gainNode.connect(audioCtx.destination);
-        source.start();
-  });
+            convolver.connect(wetGain);
+            wetGain.connect(gainNode);
+            dryGain.connect(gainNode);
+          } else {
+            nodeChainStart.connect(gainNode);
+          }
 
-        }
-      }
+          // === EQUALIZER ===
+          const eqMode = equalizerModes[equalizerModeIndex[key]];
+          let afterEQNode = gainNode;
+          if (eqMode !== "flat") {
+            const filter = audioCtx.createBiquadFilter();
+            switch (eqMode) {
+              case "highpass":
+                filter.type = "highpass";
+                filter.frequency.value = 500;
+                break;
+              case "bandpass":
+                filter.type = "bandpass";
+                filter.frequency.value = 1000;
+                break;
+              case "lowpass":
+                filter.type = "lowpass";
+                filter.frequency.value = 1000;
+                break;
+            }
+            afterEQNode.connect(filter);
+            afterEQNode = filter;
+          }
+
+          // === DISTORTION ===
+          const distAmount = [0, 100, 300, 600][distortionModeIndex[key]];
+          if (distAmount > 0) {
+            const distortionNode = audioCtx.createWaveShaper();
+            distortionNode.curve = createDistortionCurve(distAmount);
+            distortionNode.oversample = "4x";
+            afterEQNode.connect(distortionNode);
+            distortionNode.connect(audioCtx.destination);
+          } else {
+            afterEQNode.connect(audioCtx.destination);
+          }
+
+          source.start();
+        });
     }
-
   }, 400);
 
   isPlaying = true;
 }
+
+function updateDistortionBoxUI() {
+  const box = document.getElementById("distortion-box");
+  if (!box) return;
+  const rows = box.querySelectorAll(".dist-row");
+
+  rows.forEach((row, i) => {
+    const arrow = row.querySelector(".arrow");
+    row.classList.toggle("focused", i === currentDistortionIndex);
+    if (arrow) arrow.textContent = i === currentDistortionIndex ? "→" : "";
+  });
+}
+
 
 
 function stopSequence() {
@@ -366,6 +455,12 @@ document.addEventListener("keydown", (e) => {
         equalizerModeIndex[key] = currentEqualizerIndex;
         openEqualizerBox(key);
         }
+        else if (level === "distortion" && key) {
+        currentDistortionIndex = (currentDistortionIndex + 1) % distortionModes.length;
+        distortionModeIndex[key] = currentDistortionIndex;
+        openDistortionBox(key);
+        }
+
 
       break;
 
@@ -384,25 +479,34 @@ document.addEventListener("keydown", (e) => {
         equalizerModeIndex[key] = currentEqualizerIndex;
         openEqualizerBox(key);
         }
-
+        else if (level === "distortion" && key) {
+        currentDistortionIndex = (currentDistortionIndex - 1 + distortionModes.length) % distortionModes.length;
+        distortionModeIndex[key] = currentDistortionIndex;
+        openDistortionBox(key);
+        }
       break;
 
     case "Enter":
-      if (level === "side") {
-        levelStack.push("effect");
-        openSubPanel(sideItems[activeIndex]);
-      } else if (level === "effect") {
-        const focusedEffect = effects[effectIndex % effects.length];
-        if (focusedEffect === "Reverb" && key) {
-        levelStack.push("reverb");
-        updateReverbVisual(key);
-        } else if (focusedEffect === "Equalizer" && key) {
-        levelStack.push("equalizer");
-        openEqualizerBox(key);
-        }
+  if (level === "side") {
+    levelStack.push("effect");
+    openSubPanel(sideItems[activeIndex]);
+  } else if (level === "effect") {
+    const focusedEffect = effects[effectIndex % effects.length];// Effektliste schließen
 
-      }
-      break;
+    if (focusedEffect === "Reverb" && key) {
+      levelStack.push("reverb");
+      updateReverbVisual(key);
+    } else if (focusedEffect === "Equalizer" && key) {
+      levelStack.push("equalizer");
+      openEqualizerBox(key);
+    } else if (focusedEffect === "Distortion" && key) {
+      levelStack.push("distortion");
+      openDistortionBox(key);
+    }
+  }
+  break;
+
+
 
     case "Backspace":
       if (levelStack.length > 1) {
@@ -416,6 +520,10 @@ document.addEventListener("keydown", (e) => {
         if (level === "equalizer") {
         const eqBox = document.getElementById("equalizer-box");
         if (eqBox) eqBox.remove();
+        }
+        if (level === "distortion") {
+        const distBox = document.getElementById("distortion-box");
+        if (distBox) distBox.remove();
         }
 
       break;

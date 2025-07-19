@@ -130,9 +130,10 @@ justify-content: center;
 
 .gif-box{
   position: absolute;
-  height: 650px;
+  height: 516px;
   top: 230px;
   right: 290px;
+  aspect-ratio: 1/1;
 }
 
 .gif-box img{
@@ -293,6 +294,8 @@ justify-content: center;
   font-size: 1em;
   font-weight: bold;
   transform: translateX(10px);
+  display: flex;
+align-items: center;
 }
 
 .arrow {
@@ -306,7 +309,7 @@ justify-content: center;
 
 .equalizer-box {
   position: absolute;
-  bottom: 268px;
+  top: 40px;
   left: 49%;
   background-color: var(--background-color);
   padding: 13px 40px;
@@ -316,7 +319,7 @@ justify-content: center;
   border-right: white 2px solid;
   border-bottom: white 2px solid;
   flex-direction: column;
-  height: 197px;
+  height: 198px;
 }
 
 .eq-svg {
@@ -343,4 +346,46 @@ justify-content: center;
   font-size: 18px;
   color: white;
   margin-bottom: 5px;
+}
+
+.distortion-box {
+  position: absolute;
+  top: 40px;
+  left: 707px;
+  background-color: var(--background-color);
+  padding: 5px 40px;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  border-top: white 2px solid;
+  border-right: white 2px solid;
+  border-bottom: white 2px solid;
+  height: 214px;
+}
+
+.dist-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dist-row.focused .arrow {
+  visibility: visible;
+}
+
+.dist-svg {
+  filter: grayscale(1);
+  opacity: 0.5;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.dist-svg img {
+  width: 50px;
+  height: 50px;
+}
+
+.dist-row.focused .dist-svg {
+  filter: none;
+  opacity: 1;
+  transform: scale(1.2);
 }
