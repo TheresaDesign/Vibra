@@ -133,7 +133,6 @@ justify-content: center;
   height: 516px;
   top: 230px;
   right: 290px;
-  aspect-ratio: 1/1;
 }
 
 .gif-box img{
@@ -165,7 +164,6 @@ justify-content: center;
     border-radius: 1rem;
     max-width: 600px;
     width: 90%;
-    box-shadow: 0 0 20px white;
     text-align: center;
     font-family: 'Inter', sans-serif;
 }
@@ -174,7 +172,7 @@ justify-content: center;
 .controls-row {
     display: flex;
     justify-content: space-around;
-    margin: 1.5rem 0;
+    margin: 3rem 0;
     flex-wrap: wrap;
     gap: 1rem;
 }
@@ -213,6 +211,7 @@ justify-content: center;
     gap: 0.5rem;
     margin-bottom: 1.5rem;
     justify-items: center;
+    margin-top: 1.5rem;
 }
 
 .square {
@@ -433,4 +432,46 @@ align-items: center;
   height: 16px;
   background: var(--secondary-color);
   border-radius: 50%;
+}
+.notready-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.notready-box {
+  background: var(--background-color);
+  padding: 24px 32px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 300px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.notready-box p {
+  margin-bottom: 16px;
+  color: white;
+}
+
+.notready-box button {
+  padding: 8px 16px;
+  border: none;
+  background: #333;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #FF3172;
+  font-family: "Inter", sans-serif;
+    font-weight: 200;
+    font-style: normal;
+    color: white;
+    font-size: 18pt;
+    margin:5px;
 }

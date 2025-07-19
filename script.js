@@ -305,6 +305,26 @@ function updateActiveItem(index) {
   updateBeats();
 }
 
+function showNotReadyNotice() {
+  const overlay = document.createElement("div");
+  overlay.className = "notready-overlay";
+
+  const box = document.createElement("div");
+  box.className = "notready-box";
+  box.innerHTML = `
+    <p>Upsi! We're not finished here yet</p>
+    <button id="notready-close">Got it!</button>
+  `;
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  document.getElementById("notready-close").addEventListener("click", () => {
+    overlay.remove();
+  });
+}
+
+
 function updateBeats() {
   const label = sideLabels[activeIndex];
   const currentInstrument = instrumentMap[label];
@@ -547,9 +567,15 @@ document.addEventListener("keydown", (e) => {
       break;
 
     case "Enter":
-  if (level === "side") {
+    if (level === "side") {
+    const currentItem = sideItems[activeIndex];
+    if (currentItem.classList.contains("unfinished")) {
+      showNotReadyNotice();
+      return;
+    }
+
     levelStack.push("effect");
-    openSubPanel(sideItems[activeIndex]);
+    openSubPanel(currentItem);
   } else if (level === "effect") {
     const focusedEffect = effects[effectIndex % effects.length];// Effektliste schließen
 
