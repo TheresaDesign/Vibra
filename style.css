@@ -389,3 +389,48 @@ align-items: center;
   opacity: 1;
   transform: scale(1.2);
 }
+.pitch-box {
+  position: absolute;
+  top: 154px;
+  left: 806px;
+  transform: translate(-50%, -50%);
+  width: 204px;
+  height: 224px;
+  pointer-events: none;
+  z-index: 1000;
+  background-color: var(--background-color);
+  border-top: solid white 2px;
+  border-bottom: solid white 2px;
+  border-right: solid white 2px;
+}
+
+.pitch-line-wrapper {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: transparent;
+  transform: rotate(-45deg);
+  transform-origin: left center;
+  top: 180px;
+  left: 29px;
+}
+
+.pitch-line {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: white;
+  top: 0;
+  left: 0;
+  border-radius: 50px;
+}
+
+.pitch-point {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  background: var(--secondary-color);
+  border-radius: 50%;
+}

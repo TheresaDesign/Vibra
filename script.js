@@ -118,6 +118,17 @@ const equalizerModeIndex = {
 };
 let currentEqualizerIndex = 0;
 
+let currentPitchIndex = 3; // Mitte = normal (0)
+const pitchModes = [-6, -3, 0, 3, 6];
+const pitchModeIndex = {
+  "tom": 2,
+  "kick": 2,
+  "snare": 2,
+  "clap": 2,
+  "hat": 2
+};
+
+
 function getCurrentLevel() {
   return levelStack[levelStack.length - 1];
 }
@@ -233,6 +244,35 @@ function openDistortionBox(key) {
   }
 }
 
+function openPitchBox(key) {
+  let box = document.getElementById("pitch-box");
+  if (box) box.remove();
+
+  const container = document.createElement("div");
+  container.id = "pitch-box";
+  container.className = "pitch-box";
+
+  const lineWrapper = document.createElement("div");
+  lineWrapper.className = "pitch-line-wrapper";
+
+  const line = document.createElement("div");
+  line.className = "pitch-line";
+
+  const point = document.createElement("div");
+  point.className = "pitch-point";
+
+  lineWrapper.appendChild(line);
+  lineWrapper.appendChild(point);
+  container.appendChild(lineWrapper);
+  document.body.appendChild(container);
+
+  // Position des Punktes entlang der Linie
+  const index = pitchModeIndex[key] ?? 2;
+  const percentage = index / 4;
+  point.style.left = `${percentage * 100}%`;
+}
+
+
 
 function updateActiveItem(index) {
   sideItems.forEach((item, i) => {
@@ -308,6 +348,10 @@ function startSequence() {
       if (!sound) continue;
 
       const source = audioCtx.createBufferSource();
+
+      const pitch = pitchModes[pitchModeIndex[key] ?? 2];
+      source.playbackRate.value = Math.pow(2, pitch / 12); // Pitch in Halbtönen
+
 
       fetch(sound.src)
         .then(res => res.arrayBuffer())
@@ -460,6 +504,14 @@ document.addEventListener("keydown", (e) => {
         distortionModeIndex[key] = currentDistortionIndex;
         openDistortionBox(key);
         }
+        else if (level === "pitch" && key) {
+        const newIndex = Math.min(4, pitchModeIndex[key] + 1);
+        pitchModeIndex[key] = newIndex;
+        openPitchBox(key);
+      }
+      pitchModeIndex[key] = newIndex;
+      openPitchBox(key);
+
 
 
       break;
@@ -484,6 +536,14 @@ document.addEventListener("keydown", (e) => {
         distortionModeIndex[key] = currentDistortionIndex;
         openDistortionBox(key);
         }
+        else if (level === "pitch" && key) {
+        const newIndex = Math.max(0, pitchModeIndex[key] - 1);
+        pitchModeIndex[key] = newIndex;
+        openPitchBox(key);
+      }
+      pitchModeIndex[key] = newIndex;
+      openPitchBox(key);
+
       break;
 
     case "Enter":
@@ -502,8 +562,12 @@ document.addEventListener("keydown", (e) => {
     } else if (focusedEffect === "Distortion" && key) {
       levelStack.push("distortion");
       openDistortionBox(key);
-    }
-  }
+    } else if (focusedEffect === "Pitch" && key) {
+      levelStack.push("pitch");
+      openPitchBox(key);
+  
+    
+  }}
   break;
 
 
@@ -525,6 +589,11 @@ document.addEventListener("keydown", (e) => {
         const distBox = document.getElementById("distortion-box");
         if (distBox) distBox.remove();
         }
+        if (level === "pitch") {
+        const pitchBox = document.getElementById("pitch-box");
+        if (pitchBox) pitchBox.remove();
+      }
+
 
       break;
 
