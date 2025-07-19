@@ -98,7 +98,8 @@ const instrumentMap = {
   "Hat": "hat"
 };
 
-const effects = ["Reverb", "Delay", "Distortion", "Pitch"];
+const effects = ["Reverb", "Equalizer", "Distortion", "Pitch"];
+
 
 const reverbSettings = [
   { delay: 0.0, feedback: 0.0 },  // Stufe 0: Kein Reverb
@@ -106,6 +107,17 @@ const reverbSettings = [
   { delay: 0.1, feedback: 0.4 },  // Stufe 2
   { delay: 0.15, feedback: 0.6 }  // Stufe 3: Stark
 ];
+
+const equalizerModes = ["flat", "highpass", "bandpass", "lowpass"];
+const equalizerModeIndex = {
+  "tom": 0,
+  "kick": 0,
+  "snare": 0,
+  "clap": 0,
+  "hat": 0
+};
+let currentEqualizerIndex = 0;
+
 
 function getCurrentLevel() {
   return levelStack[levelStack.length - 1];
@@ -126,6 +138,32 @@ function updateReverbVisual(instrument) {
   visual.style.display = "flex";
   inner.style.width = `${size}px`;
   inner.style.height = `${size}px`;
+}
+
+function openEqualizerBox(instrumentKey) {
+  const visual = document.getElementById("reverb-visual");
+  visual.style.display = "none";
+
+  let existing = document.getElementById("equalizer-box");
+  if (existing) existing.remove();
+
+  const box = document.createElement("div");
+  box.id = "equalizer-box";
+  box.classList.add("equalizer-box");
+
+  equalizerModes.forEach((mode, i) => {
+    const svgWrapper = document.createElement("div");
+    svgWrapper.classList.add("eq-svg");
+    if (i === currentEqualizerIndex) {
+      svgWrapper.classList.add("focused");
+      svgWrapper.innerHTML = `<img src="svg/${mode}.svg" alt="${mode}">`;
+    } else {
+      svgWrapper.innerHTML = `<img src="svg/${mode}.svg" alt="${mode}">`;
+    }
+    box.appendChild(svgWrapper);
+  });
+
+  document.body.appendChild(box);
 }
 
 
@@ -234,6 +272,29 @@ function startSequence() {
         source.connect(gainNode);
         }
 
+        // Equalizer einfügen
+        const eqMode = equalizerModes[equalizerModeIndex[key]];
+        if (eqMode !== "flat") {
+        const filter = audioCtx.createBiquadFilter();
+        switch (eqMode) {
+            case "highpass":
+            filter.type = "highpass";
+            filter.frequency.value = 500;
+            break;
+            case "bandpass":
+            filter.type = "bandpass";
+            filter.frequency.value = 1000;
+            break;
+            case "lowpass":
+            filter.type = "lowpass";
+            filter.frequency.value = 1000;
+            break;
+        }
+        gainNode.connect(filter);
+        filter.connect(audioCtx.destination);
+        } else {
+        gainNode.connect(audioCtx.destination);
+        }
 
         gainNode.connect(audioCtx.destination);
         source.start();
@@ -300,7 +361,12 @@ document.addEventListener("keydown", (e) => {
       } else if (level === "reverb" && key) {
         reverbLevels[key] = Math.min(3, reverbLevels[key] + 1);
         updateReverbVisual(key);
-      }
+      } else if (level === "equalizer" && key) {
+        currentEqualizerIndex = (currentEqualizerIndex + 1) % equalizerModes.length;
+        equalizerModeIndex[key] = currentEqualizerIndex;
+        openEqualizerBox(key);
+        }
+
       break;
 
     case "ArrowLeft":
@@ -313,7 +379,12 @@ document.addEventListener("keydown", (e) => {
       } else if (level === "reverb" && key) {
         reverbLevels[key] = Math.max(0, reverbLevels[key] - 1);
         updateReverbVisual(key);
-      }
+      } else if (level === "equalizer" && key) {
+        currentEqualizerIndex = (currentEqualizerIndex - 1 + equalizerModes.length) % equalizerModes.length;
+        equalizerModeIndex[key] = currentEqualizerIndex;
+        openEqualizerBox(key);
+        }
+
       break;
 
     case "Enter":
@@ -323,9 +394,13 @@ document.addEventListener("keydown", (e) => {
       } else if (level === "effect") {
         const focusedEffect = effects[effectIndex % effects.length];
         if (focusedEffect === "Reverb" && key) {
-          levelStack.push("reverb");
-          updateReverbVisual(key);
+        levelStack.push("reverb");
+        updateReverbVisual(key);
+        } else if (focusedEffect === "Equalizer" && key) {
+        levelStack.push("equalizer");
+        openEqualizerBox(key);
         }
+
       }
       break;
 
@@ -337,7 +412,12 @@ document.addEventListener("keydown", (e) => {
           document.getElementById("reverb-visual").style.display = "none";
         }
         if (exited === "effect") closeSubPanel();
-      }
+        }
+        if (level === "equalizer") {
+        const eqBox = document.getElementById("equalizer-box");
+        if (eqBox) eqBox.remove();
+        }
+
       break;
 
     case "Escape":

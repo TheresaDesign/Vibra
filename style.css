@@ -1,5 +1,5 @@
 :root {
-    --background-color: #1d0739;
+    --background-color: rgb(30, 7, 59);
     --primary-color: #1D0739;
     --secondary-color: #FF3172;
     --text-color: #333;
@@ -302,4 +302,45 @@ justify-content: center;
 
 .white{
     background-color: white;
+}
+
+.equalizer-box {
+  position: absolute;
+  bottom: 268px;
+  left: 49%;
+  background-color: var(--background-color);
+  padding: 13px 40px;
+  display: flex;
+  z-index: 1000;
+  border-top: white 2px solid;
+  border-right: white 2px solid;
+  border-bottom: white 2px solid;
+  flex-direction: column;
+  height: 197px;
+}
+
+.eq-svg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: grayscale(1);
+  opacity: 0.5;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.eq-svg.focused {
+  filter: none;
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.eq-svg img {
+  width: 50px;
+  height: 50px;
+}
+
+.arrow {
+  font-size: 18px;
+  color: white;
+  margin-bottom: 5px;
 }
